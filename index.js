@@ -33,6 +33,7 @@ async function run() {
     const blogsCollection = client.db('assignment-12').collection('blog')
     const trainersCollection = client.db('assignment-12').collection('trainer')
     const newsLettersCollection = client.db('assignment-12').collection('newsLetters')
+    const galleryCollection = client.db('assignment-12').collection('gallery')
 
     // CRUD OPERATION  
     // featured related
@@ -68,6 +69,12 @@ async function run() {
 
     app.get('/newsLetters', async(req, res)=>{
       const result = await newsLettersCollection.find().toArray()
+      res.send(result)
+    })
+
+    // gallery related
+    app.get('/gallery',async(req, res)=>{
+      const result = await galleryCollection.find().toArray()
       res.send(result)
     })
 
