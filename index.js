@@ -30,6 +30,9 @@ async function run() {
     // collection
     const featuredCollection = client.db('assignment-12').collection('featured')
     const testomonialCollection = client.db('assignment-12').collection('testomonial')
+    const blogsCollection = client.db('assignment-12').collection('blog')
+    const trainersCollection = client.db('assignment-12').collection('trainer')
+    const newsLettersCollection = client.db('assignment-12').collection('newsLetters')
 
     // CRUD OPERATION  
     // featured related
@@ -42,6 +45,30 @@ async function run() {
     app.get('/testomonial', async(req, res)=>{
         const result = await testomonialCollection.find().toArray()
         res.send(result)
+    })
+
+    // blogs related
+    app.get('/blogs', async(req, res)=>{
+        const result = await blogsCollection.find().toArray()
+        res.send(result)
+    })
+
+    // trainer related
+    app.get('/trainers', async(req, res)=>{
+      const result = await trainersCollection.find().toArray()
+      res.send(result)
+    })
+
+    // letter related
+    app.post('/newsLetters', async(req, res)=>{
+      const letter = req.body;
+      const result = await newsLettersCollection.insertOne(letter)
+      res.send(result)
+    })
+
+    app.get('/newsLetters', async(req, res)=>{
+      const result = await newsLettersCollection.find().toArray()
+      res.send(result)
     })
 
 
