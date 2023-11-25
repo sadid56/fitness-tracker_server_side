@@ -10,7 +10,7 @@ app.use(cors())
 app.use(express.json())
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.dzbhwpo.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -34,6 +34,7 @@ async function run() {
     const trainersCollection = client.db('assignment-12').collection('trainer')
     const newsLettersCollection = client.db('assignment-12').collection('newsLetters')
     const galleryCollection = client.db('assignment-12').collection('gallery')
+    const classesCollection = client.db('assignment-12').collection('classes')
 
     // CRUD OPERATION  
     // featured related
@@ -76,6 +77,25 @@ async function run() {
     app.get('/gallery',async(req, res)=>{
       const result = await galleryCollection.find().toArray()
       res.send(result)
+    })
+
+    // classes related
+    app.post('/classes', async(req, res)=>{
+    const classes = req.body;
+    const result = await classesCollection.insertOne(classes)
+    res.send(result)
+    })
+
+    app.get('/classes', async(req, res)=>{
+      const result = await classesCollection.find().toArray()
+      res.send(result)
+    })
+
+    app.get('/classes/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await classesCollection.findOne(query)
+      res.send(result);
     })
 
 
