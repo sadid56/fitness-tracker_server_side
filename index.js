@@ -35,6 +35,7 @@ async function run() {
     const newsLettersCollection = client.db('assignment-12').collection('newsLetters')
     const galleryCollection = client.db('assignment-12').collection('gallery')
     const classesCollection = client.db('assignment-12').collection('classes')
+    const communityCollection = client.db('assignment-12').collection('community')
 
     // CRUD OPERATION  
     // featured related
@@ -96,6 +97,18 @@ async function run() {
       const query = {_id: new ObjectId(id)}
       const result = await classesCollection.findOne(query)
       res.send(result);
+    })
+
+    // community related
+    app.post('/community', async(req, res)=>{
+      const post = req.body;
+      const result = await communityCollection.insertOne(post)
+      res.send(result)
+    })
+
+    app.get('/community', async(req, res)=>{
+      const result = await communityCollection.find().toArray()
+      res.send(result)
     })
 
 
