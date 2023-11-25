@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const jwt = require('jsonwebtoken')
 const app = express();
 const port = process.env.PORT || 5600;
 
@@ -43,6 +44,41 @@ async function run() {
     const usersCollection = client.db("assignment-12").collection("users");
 
     // CRUD OPERATION
+    //auth related
+    app.post('/jwt', async(req, res)=>{
+      const user = req.body;
+      const token = jwt.sign(user, process.env.JSON_WEB_TOKEN, {expiresIn: '365d'})
+      res.send({token})
+    })
+
+    // jwt middleware
+    const verifyToken = (req,res, next)=>{
+      if(!req.headers.authorization){
+        return res.status(401).send({message: 'forbidden access'})
+      }
+      const token = req.headers.authorization.split(" ")[1]
+      jwt.verify(token, process.env.JSON_WEB_TOKEN, (err, decoded)=>{
+        if(err){
+          return res.status(401).send({message: 'forbidden access'})
+        }
+        req.decoded = decoded;
+        next()
+      })
+    }
+
+    // verify admin
+    const verifyAdmin = async(req, res, next)=>{
+      const email = req.decoded?.email;
+      const query = {email: email}
+      const user = await usersCollection.findOne(query)
+      const isAdmin = user?.role === 'admin'
+      if(!isAdmin){
+        return res.status(401).send({message: 'forbidden access'})
+      }
+      next()
+    }
+
+
     //users related
     app.post('/users', async(req, res)=>{
       const user = req.body;
@@ -56,9 +92,36 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/users', async(req, res)=>{
+    app.get('/users', verifyToken, async(req, res)=>{
       const result = await usersCollection.find().toArray()
       res.send(result)
+    })
+
+    app.get('/users/:email', verifyToken, async(req, res)=>{
+      const email = req.params.email;
+      if(email !== req.decoded?.email){
+        return res.status(401).send({message: 'forbidden access'})
+      }
+      const query = {email: email}
+      const user = await usersCollection.findOne(query)
+      let admin = false;
+      if(user){
+        admin = admin?.role === 'admin'
+      }
+      res.send({admin})
+    })
+    app.get('/users/:email', verifyToken, async(req, res)=>{
+      const email = req.params.email;
+      if(email !== req.decoded?.email){
+        return res.status(401).send({message: 'forbidden access'})
+      }
+      const query = {email: email}
+      const user = await usersCollection.findOne(query)
+      let trainer = false;
+      if(user){
+        trainer = trainer?.role === 'trainer'
+      }
+      res.send({trainer})
     })
 
     // featured related
