@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const jwt = require('jsonwebtoken')
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
+const jwt = require("jsonwebtoken");
 const app = express();
 const port = process.env.PORT || 5600;
 
@@ -40,78 +41,110 @@ async function run() {
       .collection("newsLetters");
     const galleryCollection = client.db("assignment-12").collection("gallery");
     const classesCollection = client.db("assignment-12").collection("classes");
-    const communityCollection = client.db("assignment-12").collection("community");
+    const communityCollection = client
+      .db("assignment-12")
+      .collection("community");
     const usersCollection = client.db("assignment-12").collection("users");
+    const paymentsCollection = client.db("assignment-12").collection("payments");
 
     // CRUD OPERATION
     //auth related
-    app.post('/jwt', async(req, res)=>{
+    app.post("/jwt", async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.JSON_WEB_TOKEN, {expiresIn: '365d'})
-      res.send({token})
-    })
+      const token = jwt.sign(user, process.env.JSON_WEB_TOKEN, {
+        expiresIn: "365d",
+      });
+      res.send({ token });
+    });
 
     // jwt middleware
-    const verifyToken = (req,res, next)=>{
+    const verifyToken = (req, res, next) => {
       // console.log(req.headers.authorization);
-      if(!req.headers.authorization){
-        return res.status(401).send({message: 'forbidden access '})
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "forbidden access " });
       }
-      const token = req.headers.authorization.split(" ")[1]
+      const token = req.headers.authorization.split(" ")[1];
       console.log(token);
-      jwt.verify(token, process.env.JSON_WEB_TOKEN, (err, decoded)=>{
-        if(err){
-          return res.status(401).send({message: 'forbidden access'})
+      jwt.verify(token, process.env.JSON_WEB_TOKEN, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: "forbidden access" });
         }
         req.decoded = decoded;
-        next()
-      })
-    }
+        next();
+      });
+    };
 
     // verify admin
-    const verifyAdmin = async(req, res, next)=>{
+    const verifyAdmin = async (req, res, next) => {
       const email = req.decoded?.email;
-      const query = {email: email}
-      const user = await usersCollection.findOne(query)
-      const isAdmin = user?.role === 'admin'
-      if(!isAdmin){
-        return res.status(401).send({message: 'forbidden access'})
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const isAdmin = user?.role === "admin";
+      if (!isAdmin) {
+        return res.status(401).send({ message: "forbidden access" });
       }
-      next()
-    }
+      next();
+    };
 
+    // salary related
+    app.post('/create-peyment-intent', async(req,res)=>{
+      const {salary} = req.body;
+      const amount = parseInt(salary * 100)
+
+      const paymentIntent =  await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ["card"],
+      })
+      console.log(98, paymentIntent);
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      })
+    })
+
+    // payment related
+    app.post('/payments', async(req, res)=>{
+      const payment = req.body;
+      const result = await paymentsCollection.insertOne(payment)
+      res.send(result)
+    })
+
+    app.get('/payments', async(req,res)=> {
+      const result = await paymentsCollection.find().toArray()
+      res.send(result)
+    })
 
     //users related
-    app.post('/users', async(req, res)=>{
+    app.post("/users", async (req, res) => {
       const user = req.body;
       // console.log(user, user?.email);
-      const query = {email: user?.email}
-      const isExisting = await usersCollection.findOne(query)
-      if(isExisting){
-        return res.send({message: 'user already lodded', insertedId: null})
+      const query = { email: user?.email };
+      const isExisting = await usersCollection.findOne(query);
+      if (isExisting) {
+        return res.send({ message: "user already lodded", insertedId: null });
       }
-      const result = await usersCollection.insertOne(user)
-      res.send(result)
-    })
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
 
-    app.get('/users', verifyToken, verifyAdmin, async(req, res)=>{
-      const result = await usersCollection.find().toArray()
-      res.send(result)
-    })
+    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
 
-    app.get('/users/:email', verifyToken, async(req, res)=>{
+    app.get("/users/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
-      if(email !== req.decoded?.email){
-        return res.status(401).send({message: 'forbidden access'})
+      if (email !== req.decoded?.email) {
+        return res.status(401).send({ message: "forbidden access" });
       }
-      const query = {email: email}
-      const user = await usersCollection.findOne(query)
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
       let admin = false;
-      if(user){
-        admin = admin?.role === 'admin'
+      if (user) {
+        admin = admin?.role === "admin";
       }
-      res.send({admin})
-    })
+      res.send({ admin });
+    });
     // app.get('/users/:email', verifyToken, async(req, res)=>{
     //   const email = req.params.email;
     //   if(email !== req.decoded?.email){
@@ -149,6 +182,12 @@ async function run() {
       const result = await trainersCollection.find().toArray();
       res.send(result);
     });
+    app.get("/trainers/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await trainersCollection.findOne(query);
+      res.send(result);
+    });
 
     // letter related
     app.post("/newsLetters", async (req, res) => {
@@ -157,17 +196,17 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/newsLetters",  async (req, res) => {
+    app.get("/newsLetters", async (req, res) => {
       const result = await newsLettersCollection.find().toArray();
       res.send(result);
     });
 
-    app.delete('/newsLetters/:id',   async(req, res)=>{
-        const id = req.params.id;
-        const query = {_id: new ObjectId(id)}
-        const result = await newsLettersCollection.deleteOne(query)
-        res.send(result)
-    })
+    app.delete("/newsLetters/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await newsLettersCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // gallery related
     app.get("/gallery", async (req, res) => {
