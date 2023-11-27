@@ -145,6 +145,19 @@ async function run() {
       res.send(result);
     });
 
+    app.patch('/users/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const user = req.body;
+      const AcceptTrainer = {
+        $set:{
+          role:user.role,
+        }
+      }
+      const result = await usersCollection.updateOne(query, AcceptTrainer)
+      res.send(result)
+    })
+
     app.get("/users/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       if (email !== req.decoded?.email) {
