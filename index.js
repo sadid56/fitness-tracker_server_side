@@ -140,7 +140,8 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
+    app.get("/users", async (req, res) => {
+      // console.log(req.body);
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
@@ -158,32 +159,23 @@ async function run() {
       res.send(result)
     })
 
-    app.get("/users/:email", verifyToken, async (req, res) => {
+    app.get("/users/:email", verifyToken,  async (req, res) => {
       const email = req.params.email;
       if (email !== req.decoded?.email) {
         return res.status(401).send({ message: "forbidden access" });
       }
       const query = { email: email };
       const user = await usersCollection.findOne(query);
+      // console.log(user);
       let admin = false;
+      let trainer = false;
       if (user) {
-        admin = admin?.role === "admin";
+        admin = user?.role === "admin";
+        trainer = user?.role === 'trainer'
       }
-      res.send({ admin });
+      res.send({ admin, trainer });
     });
-    // app.get('/users/:email', verifyToken, async(req, res)=>{
-    //   const email = req.params.email;
-    //   if(email !== req.decoded?.email){
-    //     return res.status(401).send({message: 'forbidden access'})
-    //   }
-    //   const query = {email: email}
-    //   const user = await usersCollection.findOne(query)
-    //   let trainer = false;
-    //   if(user){
-    //     trainer = trainer?.role === 'trainer'
-    //   }
-    //   res.send({trainer})
-    // })
+    
 
     // featured related
     app.get("/featured", async (req, res) => {
