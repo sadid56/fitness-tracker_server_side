@@ -34,7 +34,7 @@ async function run() {
     const testomonialCollection = client
       .db("assignment-12")
       .collection("testomonial");
-    const trainersCollection = client.db("assignment-12").collection("trainer");
+    const trainersCollection = client.db("assignment-12").collection("trainers");
     const newsLettersCollection = client
       .db("assignment-12")
       .collection("newsLetters");
@@ -45,6 +45,7 @@ async function run() {
       .collection("community");
     const usersCollection = client.db("assignment-12").collection("users");
     const paymentsCollection = client.db("assignment-12").collection("payments");
+    const bookedsCollection = client.db("assignment-12").collection("bookeds");
 
     // CRUD OPERATION
     //auth related
@@ -174,6 +175,13 @@ async function run() {
       }
       res.send({ admin, trainer });
     });
+
+    // booked rlated
+    app.post('/bookeds', async(req, res)=>{
+      const user = req.body;
+      const result = await bookedsCollection.insertOne(user)
+      res.send(result)
+    })
     
 
     // featured related
@@ -189,6 +197,11 @@ async function run() {
     });
 
     // trainer related
+    app.post('/trainers', async(req, res)=>{
+      const user = req.body;
+      const result = await trainersCollection.insertOne(user)
+      res.send(result)
+    })
     app.get("/trainers", async (req, res) => {
       const result = await trainersCollection.find().toArray();
       res.send(result);
@@ -254,7 +267,7 @@ async function run() {
     app.get("/community", async (req, res) => {
       const page = parseInt(req.query.page);
       const size = parseInt(req.query.size);
-      // console.log(page, size);
+      console.log(page, size);
       const result = await communityCollection
         .find()
         .skip(page * size)
