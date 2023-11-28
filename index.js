@@ -64,7 +64,7 @@ async function run() {
         return res.status(401).send({ message: "forbidden access " });
       }
       const token = req.headers.authorization.split(" ")[1];
-      console.log(token);
+      // console.log(token);
       jwt.verify(token, process.env.JSON_WEB_TOKEN, (err, decoded) => {
         if (err) {
           return res.status(401).send({ message: "forbidden access" });
@@ -96,7 +96,7 @@ async function run() {
         currency: 'usd',
         payment_method_types: ["card"],
       })
-      console.log(98, paymentIntent);
+      // console.log(98, paymentIntent);
       res.send({
         clientSecret: paymentIntent.client_secret,
       })
@@ -261,7 +261,7 @@ async function run() {
     app.get("/community", async (req, res) => {
       const page = parseInt(req.query.page);
       const size = parseInt(req.query.size);
-      console.log(page, size);
+      // console.log(page, size);
       const result = await communityCollection
         .find()
         .skip(page * size)
