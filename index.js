@@ -34,7 +34,6 @@ async function run() {
     const testomonialCollection = client
       .db("assignment-12")
       .collection("testomonial");
-    const blogsCollection = client.db("assignment-12").collection("blog");
     const trainersCollection = client.db("assignment-12").collection("trainer");
     const newsLettersCollection = client
       .db("assignment-12")
@@ -186,12 +185,6 @@ async function run() {
     //testomonial related
     app.get("/testomonial", async (req, res) => {
       const result = await testomonialCollection.find().toArray();
-      res.send(result);
-    });
-
-    // blogs related
-    app.get("/blogs", async (req, res) => {
-      const result = await blogsCollection.find().toArray();
       res.send(result);
     });
 
