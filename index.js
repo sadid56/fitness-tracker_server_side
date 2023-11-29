@@ -182,6 +182,11 @@ async function run() {
       const result = await bookedsCollection.insertOne(user)
       res.send(result)
     })
+
+    app.get('/bookeds', async(req, res)=>{
+      const result = await bookedsCollection.find().toArray()
+      res.send(result)
+    })
     
 
     // featured related
